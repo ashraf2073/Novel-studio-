@@ -28,11 +28,11 @@ jobs:
             unzip -o -q "$z"
           done
 
-      - name: Locate project folder (finds package.json anywhere)
+      - name: Locate project folder
         run: |
           FILE=$(find . -name package.json -not -path '*/node_modules/*' -not -path './android/*' | head -1)
           if [ -z "$FILE" ]; then
-            echo "::error::package.json not found in the repo. Upload novel-studio.zip to the repo root."
+            echo "::error::package.json not found. Upload novel-studio.zip to the repo root."
             exit 1
           fi
           echo "APP_DIR=$(dirname "$FILE")" >> "$GITHUB_ENV"
@@ -53,22 +53,9 @@ jobs:
         working-directory: ${{ env.APP_DIR }}
         run: npm install
 
-      - name: Add Android platform
+      - name: Prepare Android project (offline libs, icon, permissions)
         working-directory: ${{ env.APP_DIR }}
-        run: |
-          if [ ! -d android ]; then npx cap add android; fi
-
-      - name: Add microphone permission
-        working-directory: ${{ env.APP_DIR }}
-        run: |
-          MANIFEST=android/app/src/main/AndroidManifest.xml
-          if ! grep -q RECORD_AUDIO "$MANIFEST"; then
-            sed -i 's#<application#<uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <application#' "$MANIFEST"
-          fi
-
-      - name: Sync web assets into Android
-        working-directory: ${{ env.APP_DIR }}
-        run: npx cap sync android
+        run: bash scripts/prepare-android.sh
 
       - name: Build debug APK
         working-directory: ${{ env.APP_DIR }}/android
