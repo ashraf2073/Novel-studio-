@@ -20,11 +20,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Unpack project zip (if you uploaded it as a .zip)
+        run: |
+          shopt -s nullglob
+          for z in *.zip; do
+            echo "Unpacking $z"
+            unzip -o -q "$z"
+          done
+
       - name: Locate project folder (finds package.json anywhere)
         run: |
           FILE=$(find . -name package.json -not -path '*/node_modules/*' -not -path './android/*' | head -1)
           if [ -z "$FILE" ]; then
-            echo "::error::package.json not found in the repo. Upload the project files (package.json, capacitor.config.json, www/) to the repo."
+            echo "::error::package.json not found in the repo. Upload novel-studio.zip to the repo root."
             exit 1
           fi
           echo "APP_DIR=$(dirname "$FILE")" >> "$GITHUB_ENV"
